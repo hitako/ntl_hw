@@ -1,141 +1,46 @@
-class Student:
-    def __init__(self, name, surname, gender):
-        self.name = name
-        self.surname = surname
-        self.gender = gender
-        self.finished_courses = []
-        self.courses_in_progress = []
-        self.grades = {}
+class CookBook:
+    def __init__(self, file_path):
+        self.cook_book = {}
+        self.file_path = file_path
+        self.recipes = []
 
-    def get_avg_grade(self):
-        mark_sum = 0
-        mark_counts = 0
-        for course, grades in self.grades.items():
-            for grade in grades:
-                mark_sum += grade
-                mark_counts += 1
+    def add_recipes_in_cook_book(self):
+        if self.recipes:
+            for recipe in self.recipes:
+                dish = recipe.split('\n')
+                dish_name = dish.pop(0)
+                self.cook_book[dish_name] = []
+                dish.pop(0)
+                self.__add_dish_in_cook_book(dish_name, dish)
 
-        if mark_counts > 0:
-            return mark_sum / mark_counts
+    def set_recipes_from_file(self):
+        with open(self.file_path, "r", encoding="utf-8") as book:
+            self.recipes = book.read().split("\n\n")
 
-    def __str__(self):
-        return "Имя: " + self.name + "\nФамилия: " + self.surname + "\nСредняя оценка за домашние задания: " \
-               + str(self.get_avg_grade()) + "\nКурсы в процессе изучения: " + ', '.join(self.courses_in_progress) \
-               + "\nЗавершенные курсы: " + ', '.join(self.finished_courses)
+    def __add_dish_in_cook_book(self, dish_name, dish_composition):
+        for ingredient in dish_composition:
+            ingredient_parse = ingredient.split("|")
+            self.cook_book[dish_name].append(
+                {'ingredient_name': ingredient_parse[0], 'quantity': ingredient_parse[1],
+                 'measure': ingredient_parse[2]})
 
-    def __gt__(self, other):
-        if not isinstance(other, Lecturer):
-            print("Ошибка")
-            return
-        else:
-            return self.get_avg_grade() > other.get_avg_grade()
+    def get_shop_list_by_dishes(self, dishes, person_count):
+        shop_list = dict()
+        for dish in dishes:
+            for cook in self.cook_book[dish]:
+                if shop_list.get(cook['ingredient_name']) is None:
+                    shop_list[cook['ingredient_name']] = {
+                        'measure': cook['measure'], 'quantity': int(cook['quantity']) * person_count
+                    }
+                else:
+                    shop_list[cook['ingredient_name']]['quantity'] *= person_count
 
-
-class Mentor:
-    def __init__(self, name, surname):
-        self.name = name
-        self.surname = surname
-        self.courses_attached = []
-
-    def has_joint_course(self, student, course):
-        return isinstance(student,
-                          Student) and course in self.courses_attached and course in student.courses_in_progress
+        return shop_list
 
 
-class Lecturer(Mentor):
-    def __init__(self, name, surname):
-        super().__init__(name, surname)
-        self.student_mark = []
+cook_book = CookBook("book.txt")
+cook_book.set_recipes_from_file()
+cook_book.add_recipes_in_cook_book()
+# print(cook_book.cook_book)
 
-    def set_student_mark(self, student, course, mark):
-        if self.has_joint_course(student, course):
-            self.student_mark += [mark]
-        else:
-            return "Ошибка"
-
-    def get_avg_grade(self):
-        if len(self.student_mark) > 0:
-            mark_sum = 0
-            for mark in self.student_mark:
-                mark_sum += mark
-
-            return mark_sum / len(self.student_mark)
-
-    def __str__(self):
-        return "Имя: " + self.name + "\nФамилия: " + self.surname + "\nСредняя оценка за лекции: " \
-               + str(self.get_avg_grade())
-
-    def __gt__(self, other):
-        if not isinstance(other, Student):
-            print("Ошибка")
-            return
-        else:
-            return self.get_avg_grade() > other.get_avg_grade()
-
-
-class Reviewer(Mentor):
-    def rate_hw(self, student, course, grade):
-        if self.has_joint_course(student, course):
-            if course in student.grades:
-                student.grades[course] += [grade]
-            else:
-                student.grades[course] = [grade]
-        else:
-            return 'Ошибка'
-
-    def __str__(self):
-        return "Имя: " + self.name + "\nФамилия: " + self.surname
-
-
-def get_avg_grade_students(students, course):
-    if isinstance(students, list):
-        grade_sum = 0
-        grades_count = 0
-        for student in students:
-            if not isinstance(student, Student):
-                return
-            if course in student.grades:
-                for grade in student.grades[course]:
-                    grade_sum += grade
-                    grades_count += 1
-
-        if grades_count > 0:
-            return grade_sum / grades_count
-
-
-male_student = Student('Adam', 'Sandler', 'M')
-male_student.courses_in_progress += ['Python', 'Git']
-
-female_student = Student('Kira', 'Nightly', 'F')
-female_student.courses_in_progress += ['Java', 'Python', 'PHP']
-
-first_reviewer = Reviewer('Some', 'Buddy')
-first_reviewer.courses_attached += ['Python', 'Git']
-
-second_reviewer = Reviewer('David', 'Galustyan')
-second_reviewer.courses_attached += ['Java', 'PHP']
-
-first_reviewer.rate_hw(male_student, 'Python', 10)
-first_reviewer.rate_hw(male_student, 'Python', 7)
-first_reviewer.rate_hw(female_student, 'Python', 10)
-first_reviewer.rate_hw(female_student, 'PHP', 9)
-
-second_reviewer.rate_hw(male_student, 'Git', 10)
-second_reviewer.rate_hw(male_student, 'Git', 9)
-second_reviewer.rate_hw(female_student, 'Java', 10)
-second_reviewer.rate_hw(female_student, 'Java', 9)
-
-first_lecturer = Lecturer("First", "Firstov")
-first_lecturer.courses_attached += ['Python', 'Git']
-first_lecturer.set_student_mark(male_student, 'Python', 5)
-first_lecturer.set_student_mark(female_student, 'Python', 7)
-
-second_lecturer = Lecturer("Second", "Secondov")
-second_lecturer.courses_attached += ['Java', 'PHP', 'Git']
-second_lecturer.set_student_mark(male_student, 'Git', 5)
-second_lecturer.set_student_mark(male_student, 'Git', 7)
-second_lecturer.set_student_mark(female_student, 'Java', 7)
-second_lecturer.set_student_mark(female_student, 'Java', 10)
-
-
-print(get_avg_grade_students([male_student, female_student], 'Python'))
+print(cook_book.get_shop_list_by_dishes(['Запеченный картофель', 'Омлет'], 2))
