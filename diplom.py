@@ -1,5 +1,6 @@
 import requests
 import time
+import os.path
 import json
 from datetime import datetime
 from pprint import pprint
@@ -20,13 +21,42 @@ class FileHandler:
     def get_file_type(url):
         return url[:url.find('?')].split('.')[-1]
 
+    @staticmethod
+    def get_file_line(file_path):
+        with open(file_path, 'r', encoding="utf-8") as f:
+            return f.readline().strip()
+
+    @staticmethod
+    def file_exist(file_path):
+        return os.path.isfile(file_path)
+
+    @staticmethod
+    def show_error_non_exist_file(file_path, service_name=""):
+        if os.path.dirname(file_path) != "":
+            dir_name_text = " в директории " + os.path.dirname(file_path) + " относительно расположения файла-скрипта"
+        else:
+            dir_name_text = " в той же директории где находится файл-скрипт"
+
+        print("Файл не найден. Пожалуйста, создайте файл " + os.path.basename(file_path) + dir_name_text
+              + ", чтобы воспользоваться сервисом " + service_name)
+
 
 class YandexDisc:
     YANDEX_UPLOAD_URI = "https://cloud-api.yandex.net/v1/disk/resources/upload"
-    TOKEN = "" # ЗДЕСЬ НУЖНО ЗАДАТЬ OAuth ТОКЕН ЯНДЕКС.ДИСКа
+    TOKEN_PATH = "tokens/yandex_disc.txt"
+
+    def __init__(self):
+        self.token = self.__get_token()
+
+    def __get_token(self):
+        if not FileHandler.file_exist(self.TOKEN_PATH):
+            FileHandler.show_error_non_exist_file(self.TOKEN_PATH, "API Яндекс.Диск")
+            raise SystemExit
+        else:
+            return FileHandler.get_file_line(self.TOKEN_PATH)
 
     def _get_headers(self):
-        return {'Authorization': 'OAuth ' + self.TOKEN}
+        return {'Authorization': 'OAuth ' + self.token}
 
     def upload(self, download_url, upload_path, file_name):
         return requests.post(self.YANDEX_UPLOAD_URI, headers=self._get_headers(),
@@ -38,7 +68,7 @@ class YandexDisc:
     def upload_photos(self, photos_list, upload_path):
         likes_count = []
         for photo in photos_list:
-            #pprint(photo)
+            # pprint(photo)
             url = photo['sizes'][-1]['url']
             if photo['likes']['count'] in likes_count:
                 name = str(photo['likes']['count']) + "_" + str(datetime.now()) + "." \
@@ -50,7 +80,7 @@ class YandexDisc:
             response = self.upload(url, upload_path, name)
             time.sleep(5)
             if self.success_upload(response):
-                FileHandler.add_log(name, photo['sizes'][-1]['type'], 'from_vk_to_yadisc.json')
+                FileHandler.add_log(name, photo['sizes'][-1]['type'], 'from_vk_to_ya_disc.json')
 
     def success_upload(self, response):
         return self.get_request(response['href']).json()['status'] == 'success'
@@ -58,14 +88,22 @@ class YandexDisc:
 
 class Vkontakte:
     ROOT_URI = "https://api.vk.com/method/"
+    TOKEN_PATH = "tokens/vkontakte.txt"
 
-    def __init__(self, token, api_version):
-        self.token = token
+    def __init__(self, api_version):
+        self.token = self.__get_token()
         self.api_version = api_version
         self.params = {
             "access_token": self.token,
             "v": self.api_version,
         }
+
+    def __get_token(self):
+        if not FileHandler.file_exist(self.TOKEN_PATH):
+            FileHandler.show_error_non_exist_file(self.TOKEN_PATH, "API Vkontakte")
+            raise SystemExit
+        else:
+            return FileHandler.get_file_line(self.TOKEN_PATH)
 
     def __set_params(self, params):
         return {**params, **self.params}
@@ -89,7 +127,7 @@ class Vkontakte:
         return requests.get(self.ROOT_URI + "photos.get", params=params).json()['response']['items']
 
 
-vk = Vkontakte("958eb5d439726565e9333aa30e50e0f937ee432e927f0dbd541c541887d919a7c56f95c04217915c32008", "5.131")
+vk = Vkontakte("5.131")
 user_id = vk.get_user_id_by_user_code("id18452")
 photos = vk.get_profile_photos(user_id)
 
