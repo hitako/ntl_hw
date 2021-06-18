@@ -42,7 +42,7 @@ class FileHandler:
 
 
 class YandexDisc:
-    YANDEX_UPLOAD_URI = "https://cloud-api.yandex.net/v1/disk/resources/upload"
+    YANDEX_UPLOAD_URI = "https://cloud-api.yandex.net/v1/disk/resources"
     TOKEN_PATH = "tokens/yandex_disc.txt"
 
     def __init__(self):
@@ -59,11 +59,13 @@ class YandexDisc:
         return {'Authorization': 'OAuth ' + self.token}
 
     def upload(self, download_url, upload_path, file_name):
-        return requests.post(self.YANDEX_UPLOAD_URI, headers=self._get_headers(),
+        return requests.post(self.YANDEX_UPLOAD_URI + "/upload", headers=self._get_headers(),
                              params={'url': download_url, 'path': upload_path + file_name}).json()
 
     def get_request(self, url):
         return requests.get(url, headers=self._get_headers())
+
+    #def show_upload_error(self, error_code, error_text):
 
     def upload_photos(self, photos_list, upload_path):
         likes_count = []
@@ -78,12 +80,27 @@ class YandexDisc:
                 likes_count.append(photo['likes']['count'])
 
             response = self.upload(url, upload_path, name)
+            if 'error' in response:
+                if response['error'] == 'DiskPathDoesntExistsError':
+                    response_cd = self.create_dir(upload_path)
+                    if 'error' in response_cd:
+                        print(response_cd['message'])
+                        continue
+                    else:
+                        response = self.upload(url, upload_path, name)
+                else:
+                    print(response['error'])
+                    continue
+
             time.sleep(5)
-            if self.success_upload(response):
+            if self.success_upload(response['href']):
                 FileHandler.add_log(name, photo['sizes'][-1]['type'], 'from_vk_to_ya_disc.json')
 
     def success_upload(self, response):
-        return self.get_request(response['href']).json()['status'] == 'success'
+        return self.get_request(response).json()['status'] == 'success'
+
+    def create_dir(self, dir_name):
+        return requests.put(self.YANDEX_UPLOAD_URI, headers=self._get_headers(), params={'path': dir_name}).json()
 
 
 class Vkontakte:
