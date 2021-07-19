@@ -1,0 +1,50 @@
+INSERT INTO musicians_list(name)
+VALUES ('Вася'), ('Петя'), ('Коля'), ('Дима'),
+('Олег'), ('Степан'), ('Денис'), ('Альберт'), ('Валерий Николаевич')
+
+INSERT INTO musical_genres(name)
+VALUES ('Шансон'), ('Поп'), ('Рок'), ('Рэп'), ('Классика')
+
+INSERT INTO music_albums(name, year)
+VALUES ('Первый', 1991), ('Второй', 1992), ('Третий', 1993), ('Четвертый', 1994),
+('Пятый', 1995), ('Шестой', 1996), ('Седьмой', 1997), ('Восьмой', 1998), ('Девятый', 2018), ('Десятый', 2018)
+
+INSERT INTO music_tracks(name, duration, album_id)
+VALUES ('Первый', 181, 1), ('Второй', 182, 2), ('Третий', 183, 3), ('Четвертый', 184, 4),
+('Пятый', 185, 5), ('Шестой', 186, 6), ('Седьмой', 187, 7), ('Восьмой', 188, 8),
+('Девятый', 189, 1), ('Десятый', 190, 2), ('Одинадцатый', 191, 3), ('Двенадцатый', 192, 4),
+('Тринадцатый', 193, 5), ('Четырнадцатый', 194, 6), ('Пятнадцатый', 195, 7), ('Шестнадцатый', 196, 8),
+('Семнадцатый', 217, 4), ('Восемнадцатый', 218, 5), ('Девятнадцатый', 219, 6), ('мой трек', 175, 4), ('my track', 176, 3), ('мой друг', 177, 5),
+('твой мой', 181, 1), ('твой мой чужой', 182, 2), ('oh my', 183, 3)
+
+INSERT INTO music_collection(name, year)
+VALUES ('Первый', 1991), ('Второй', 1992), ('Третий', 1993), ('Четвертый', 1994),
+('Пятый', 1995), ('Шестой', 1996), ('Седьмой', 1997), ('Восьмой', 1998), ('Девятый', 2018), ('Десятый', 2019), ('Одинадцатый', 2020), ('Двенадцатый', 2021)
+
+
+INSERT INTO collection_track(track_id, collection_id)
+VALUES (1, 1), (1, 2), (2, 1), (2, 2),
+(3, 1), (4, 2), (1, 5), (3, 2), (3, 3), (3, 4)
+
+INSERT INTO genres_musicians(genre_id, musician_id)
+VALUES (1, 1), (1, 2), (2, 1), (2, 2),
+(3, 1), (4, 2), (1, 5), (3, 2), (3, 3), (3, 4)
+
+INSERT INTO musicians_albums(album_id, musician_id)
+VALUES (1, 1), (1, 2), (2, 1), (2, 2),
+(3, 1), (4, 2), (1, 5), (3, 2), (3, 3), (3, 4)
+
+===================================================
+
+1. SELECT name, year FROM music_albums WHERE year = 2018
+
+2. SELECT name, duration FROM music_tracks ORDER BY duration DESC LIMIT 1
+
+3. SELECT name FROM music_tracks WHERE duration >= 210
+
+4. SELECT name FROM music_collection WHERE year BETWEEN 2018 AND 2020
+
+5. SELECT name FROM musicians_list WHERE name NOT LIKE '% %'
+
+6. SELECT name FROM music_tracks WHERE name LIKE 'my %' OR name LIKE '% my' OR name LIKE '% my %'
+ OR name LIKE '% мой' OR name LIKE 'мой %' OR name LIKE '% мой %'
